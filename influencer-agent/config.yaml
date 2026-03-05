@@ -1,0 +1,66 @@
+# === Eddie Influencer Agent Configuration ===
+
+# --- Discovery Settings ---
+discovery:
+  niche_keywords:
+    - ""  # e.g. "fitness", "christian", "study"
+  hashtags:
+    - ""  # e.g. "fitnessmotivation", "biblestudy"
+  filters:
+    min_followers: 10000
+    max_followers: 50000
+    min_avg_views: 10000
+    min_engagement_rate: 0.02
+    must_have_email: false
+    exclude_verified: false
+  max_results_per_search: 200
+  search_interval_hours: 24
+
+# --- Email Outreach Settings ---
+outreach:
+  daily_email_limit: 1000
+  emails_per_batch: 100
+  cpm_rate: 10
+  app_name: ""          # Your app name
+  app_url: ""           # App Store / website URL
+  sender_name: ""       # Your name
+  company_name: ""      # Your company
+  physical_address: ""  # Required by CAN-SPAM
+  unsubscribe_url: ""   # Unsubscribe endpoint
+  webhook_url: ""       # Smartlead webhook endpoint (e.g. https://your-domain/webhook/smartlead)
+  follow_up_sequence:
+    - delay_days: 3
+      template: "followup_1"
+    - delay_days: 7
+      template: "followup_2"
+    - delay_days: 14
+      template: "followup_3"
+    - delay_days: 21
+      template: "breakup"
+
+# --- DM Settings (optional, high risk) ---
+dm:
+  enabled: false
+  daily_limit: 100
+  delay_between_dms_sec: 120
+  warmup_days: 14
+  warmup_daily_start: 10
+
+# --- Notifications ---
+notifications:
+  telegram:
+    bot_token: ""   # Use env: TELEGRAM_BOT_TOKEN
+    chat_id: ""     # Use env: TELEGRAM_CHAT_ID
+  escalation_triggers:
+    - "interested"
+    - "meeting_request"
+
+# --- KPI Reporting ---
+kpi:
+  daily_report_cron: "0 9 * * *"
+  weekly_report_cron: "0 9 * * 1"
+  timezone: "Asia/Tokyo"
+
+# --- Database ---
+database:
+  path: "data/influencer_agent.db"

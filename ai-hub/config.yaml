@@ -1,0 +1,79 @@
+# === AI Hub Configuration ===
+
+slack:
+  channels:
+    briefing: ""     # #daily-briefing channel ID
+    mail_inbox: ""   # #mail-inbox channel ID
+    approvals: ""    # #approvals channel ID
+
+hub:
+  briefing_cron: "0 9 * * *"    # 毎朝9:00 JST
+  timezone: "Asia/Tokyo"
+
+mail:
+  fetch_interval_minutes: 60
+  imap_server: "imap.gmail.com"
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  max_emails_per_fetch: 50
+  categories:
+    - urgent        # 緊急対応必要
+    - needs_reply   # 返信が必要
+    - info_only     # 情報のみ（返信不要）
+    - spam          # スパム/不要
+
+kpi:
+  collect_interval_minutes: 30
+  sources:
+    eddie:
+      enabled: true
+      db_path: "~/influencer-agent/data/influencer_agent.db"
+    cfo:
+      enabled: true
+      api_url: ""   # Vercel URL
+    trading:
+      enabled: false
+      log_path: ""
+    note:
+      enabled: false
+
+approval:
+  auto_approve_rules:
+    - name: "low_risk_email"
+      condition: "category == 'info_only'"
+      action: "auto_archive"
+      enabled: false
+    - name: "small_expense"
+      condition: "amount < 10000"
+      action: "auto_approve"
+      enabled: false
+
+news:
+  enabled: true
+  language: "ja"
+  focus: "AI, テクノロジー, EC, マーケティング, ビジネス"
+  fetch_cron: "0 7 * * *"    # 毎朝7:00に取得（ブリーフィング前）
+  max_articles_per_feed: 10
+  feeds:
+    # --- AI/テクノロジー ---
+    - name: "TechCrunch"
+      url: "https://techcrunch.com/feed/"
+    - name: "The Verge"
+      url: "https://www.theverge.com/rss/index.xml"
+    - name: "Hacker News"
+      url: "https://hnrss.org/best?count=15"
+    - name: "AI News"
+      url: "https://buttondown.com/ainews/rss"
+    # --- 日本語 ---
+    - name: "ITmedia AI+"
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml"
+    - name: "GIGAZINE"
+      url: "https://gigazine.net/news/rss_2.0/"
+    - name: "BRIDGE"
+      url: "https://thebridge.jp/feed"
+    # --- EC/ビジネス ---
+    - name: "Impress Watch"
+      url: "https://www.watch.impress.co.jp/data/rss/1.0/ipw/feed.rdf"
+
+database:
+  path: "data/hub.db"

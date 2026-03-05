@@ -1,0 +1,68 @@
+name: db-backup
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'  # Sunday 3:00 JST
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-cloud.txt
+
+      - run: pip install libsql-experimental
+
+      - name: Dump Turso databases
+        env:
+          TURSO_HUB_URL: ${{ secrets.TURSO_HUB_URL }}
+          TURSO_HUB_TOKEN: ${{ secrets.TURSO_HUB_TOKEN }}
+          TURSO_EDDIE_URL: ${{ secrets.TURSO_EDDIE_URL }}
+          TURSO_EDDIE_TOKEN: ${{ secrets.TURSO_EDDIE_TOKEN }}
+        run: |
+          python3 -c "
+          import libsql_experimental as libsql
+          import os, sqlite3
+
+          for name, url_key, token_key in [
+              ('hub', 'TURSO_HUB_URL', 'TURSO_HUB_TOKEN'),
+              ('eddie', 'TURSO_EDDIE_URL', 'TURSO_EDDIE_TOKEN'),
+          ]:
+              url = os.environ.get(url_key)
+              token = os.environ.get(token_key)
+              if not url or not token:
+                  print(f'Skipping {name}: no credentials')
+                  continue
+              print(f'Backing up {name}...')
+              remote = libsql.connect(f'{name}.db', sync_url=url, auth_token=token)
+              remote.sync()
+              # The local replica file IS the backup
+              print(f'  {name}.db synced')
+          "
+
+      - name: Upload backups as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_number }}
+          path: |
+            hub.db
+            eddie.db
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="❌ Weekly DB backup failed" \
+            -d parse_mode=Markdown

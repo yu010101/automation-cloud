@@ -1,0 +1,44 @@
+name: approval-weekly
+
+on:
+  schedule:
+    - cron: '0 1 * * 1'  # Monday 10:00 JST
+  workflow_dispatch:
+
+jobs:
+  approval-weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ai-hub
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-cloud.txt
+
+      - run: pip install -r ../requirements-cloud.txt
+
+      - name: Generate weekly approval report
+        env:
+          DB_BACKEND: turso
+          TURSO_HUB_URL: ${{ secrets.TURSO_HUB_URL }}
+          TURSO_HUB_TOKEN: ${{ secrets.TURSO_HUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_APPROVALS: ${{ secrets.SLACK_CHANNEL_APPROVALS }}
+        run: python -m src.kpi.auto_approve --report
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="❌ approval-weekly workflow failed" \
+            -d parse_mode=Markdown

@@ -1,0 +1,10 @@
+Subject: Re: Partnership opportunity for {{first_name}}
+
+Hi {{first_name}},
+
+Just following up on my previous email. I wanted to share that creators in your niche are averaging ${{cpm_rate}} CPM with us, and we've seen great results from partnerships like this.
+
+Would love to chat if you're interested. No pressure either way.
+
+Best,
+{{sender_name}}

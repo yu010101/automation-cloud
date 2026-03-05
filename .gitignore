@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+*.env.local
+
+# Data
+data/
+*.db
+*.db-info
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+dist/
+.wrangler/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

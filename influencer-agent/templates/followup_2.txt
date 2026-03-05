@@ -1,0 +1,10 @@
+Subject: Quick update for {{first_name}}
+
+Hi {{first_name}},
+
+I thought you might find this interesting - one of our creator partners recently got {{example_views}} views on their {{app_name}} content, earning ${{example_earnings}} from that single video.
+
+We'd love to help you achieve similar results. If you're open to it, I can share our creator guide with everything you need to get started.
+
+Best,
+{{sender_name}}

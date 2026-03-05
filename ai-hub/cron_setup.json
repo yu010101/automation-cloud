@@ -1,0 +1,45 @@
+{
+  "description": "Add these cron jobs to ~/.openclaw/cron/jobs.json",
+  "jobs_to_add": [
+    {
+      "name": "hub-daily-briefing",
+      "schedule": {"kind": "cron", "expr": "0 9 * * *", "tz": "Asia/Tokyo"},
+      "delivery": {"mode": "announce", "channel": "slack"},
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the daily briefing: cd ~/ai-hub && source .venv/bin/activate && python -m src.hub.briefing --post",
+        "thinking": "medium"
+      }
+    },
+    {
+      "name": "mail-hourly-check",
+      "schedule": {"kind": "cron", "expr": "0 * * * *", "tz": "Asia/Tokyo"},
+      "delivery": {"mode": "none"},
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the email pipeline: cd ~/ai-hub && source .venv/bin/activate && python -m src.mail.pipeline",
+        "thinking": "low"
+      }
+    },
+    {
+      "name": "kpi-collect",
+      "schedule": {"kind": "cron", "expr": "*/30 * * * *", "tz": "Asia/Tokyo"},
+      "delivery": {"mode": "none"},
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Collect KPI snapshots: cd ~/ai-hub && source .venv/bin/activate && python -m src.kpi.collector",
+        "thinking": "low"
+      }
+    },
+    {
+      "name": "approval-weekly-report",
+      "schedule": {"kind": "cron", "expr": "0 10 * * 1", "tz": "Asia/Tokyo"},
+      "delivery": {"mode": "announce", "channel": "slack"},
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Generate weekly approval pattern report: cd ~/ai-hub && source .venv/bin/activate && python -m src.kpi.auto_approve --report",
+        "thinking": "medium"
+      }
+    }
+  ]
+}

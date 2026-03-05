@@ -1,0 +1,65 @@
+name: health-check
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # 6:00 JST daily
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check workflow statuses
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FAILED=""
+          for wf in news-fetch morning-brief hub-briefing mail-check kpi-collect approval-weekly; do
+            STATUS=$(gh run list --workflow="${wf}.yml" --limit=1 --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "unknown")
+            echo "${wf}: ${STATUS}"
+            if [ "$STATUS" = "failure" ]; then
+              FAILED="${FAILED}${wf}\n"
+            fi
+          done
+
+          if [ -n "$FAILED" ]; then
+            echo "FAILED_WORKFLOWS<<EOF" >> $GITHUB_ENV
+            echo -e "$FAILED" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "has_failures=true" >> $GITHUB_ENV
+          else
+            echo "has_failures=false" >> $GITHUB_ENV
+            echo "All workflows healthy!"
+          fi
+
+      - name: Check Cloudflare Worker health
+        run: |
+          WORKER_URL="${{ secrets.WORKER_URL }}"
+          if [ -n "$WORKER_URL" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${WORKER_URL}/health" || echo "000")
+            echo "Worker health: HTTP ${STATUS}"
+            if [ "$STATUS" != "200" ]; then
+              echo "worker_down=true" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Send Telegram alert on failure
+        if: env.has_failures == 'true' || env.worker_down == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MSG="⚠️ *Health Check Alert*\n"
+          if [ "${{ env.has_failures }}" = "true" ]; then
+            MSG="${MSG}\nFailed workflows:\n${{ env.FAILED_WORKFLOWS }}"
+          fi
+          if [ "${{ env.worker_down }}" = "true" ]; then
+            MSG="${MSG}\nWebhook worker is DOWN"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="${MSG}" \
+            -d parse_mode=Markdown

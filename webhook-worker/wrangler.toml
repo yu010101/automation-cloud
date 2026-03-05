@@ -1,0 +1,11 @@
+name = "eddie-webhook"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+
+# Secrets (set via `wrangler secret put`):
+# ANTHROPIC_API_KEY
+# TURSO_EDDIE_URL
+# TURSO_EDDIE_TOKEN
+# TELEGRAM_BOT_TOKEN
+# TELEGRAM_CHAT_ID
+# WEBHOOK_SECRET  (optional, for request validation)

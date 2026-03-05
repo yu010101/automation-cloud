@@ -1,0 +1,10 @@
+Subject: Last note from {{sender_name}}
+
+Hi {{first_name}},
+
+I've reached out a few times and want to respect your time. If promoting {{app_name}} isn't the right fit for you right now, no worries at all.
+
+If anything changes in the future, feel free to reach out. We're always looking for great creators to work with.
+
+Wishing you the best,
+{{sender_name}}

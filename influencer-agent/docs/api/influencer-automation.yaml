@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  title: Influencer Agent Internal API
+  description: Internal script communication for Eddie influencer automation
+  version: 1.0.0
+
+paths:
+  /webhook/smartlead:
+    post:
+      summary: Receive Smartlead webhook events
+      description: Handles EMAIL_REPLY, EMAIL_BOUNCE, LEAD_UNSUBSCRIBED events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmartleadWebhook'
+      responses:
+        '200':
+          description: Event processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+components:
+  schemas:
+    Influencer:
+      type: object
+      required: [instagram_username]
+      properties:
+        id:
+          type: integer
+        instagram_username:
+          type: string
+        full_name:
+          type: string
+        biography:
+          type: string
+        followers_count:
+          type: integer
+        avg_views:
+          type: integer
+        avg_engagement_rate:
+          type: number
+          format: float
+        email:
+          type: string
+          format: email
+        email_source:
+          type: string
+          enum: [bio, website, business_contact]
+        website_url:
+          type: string
+          format: uri
+        niche:
+          type: string
+        status:
+          type: string
+          enum: [discovered, contacted, replied, negotiating, contracted, rejected, blacklisted]
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: integer
+        smartlead_campaign_id:
+          type: integer
+        name:
+          type: string
+        niche:
+          type: string
+        status:
+          type: string
+          enum: [drafted, active, paused, completed]
+
+    OutreachLog:
+      type: object
+      properties:
+        influencer_id:
+          type: integer
+        campaign_id:
+          type: integer
+        sequence_number:
+          type: integer
+        email_subject:
+          type: string
+        email_body:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, opened, clicked, replied, bounced, unsubscribed]
+        reply_category:
+          type: string
+          enum: [interested, meeting_request, not_interested, question, out_of_office, wrong_person]
+
+    SmartleadWebhook:
+      type: object
+      properties:
+        event_type:
+          type: string
+          enum: [EMAIL_REPLY, EMAIL_BOUNCE, LEAD_UNSUBSCRIBED, LEAD_CATEGORY_UPDATED]
+        campaign_id:
+          type: integer
+        campaign_name:
+          type: string
+        sl_lead_email:
+          type: string
+        to_name:
+          type: string
+        subject:
+          type: string
+        preview_text:
+          type: string
+        time_replied:
+          type: string
+          format: date-time
+        sequence_number:
+          type: integer
+
+    DailyKPI:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        influencers_discovered:
+          type: integer
+        emails_sent:
+          type: integer
+        emails_opened:
+          type: integer
+        emails_replied:
+          type: integer
+        leads_interested:
+          type: integer
+        leads_contracted:
+          type: integer
