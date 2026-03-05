@@ -12,4 +12,4 @@ apify-client>=1.8.0
 requests>=2.32.0
 
 # Turso (libsql)
-libsql-experimental>=0.0.56
+libsql-experimental>=0.0.50
