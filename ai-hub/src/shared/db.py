@@ -28,14 +28,97 @@ def _get_db_path() -> Path:
     return _DB_PATH
 
 
+def _dict_factory(cursor, row):
+    """Row factory that returns dict-like objects compatible with sqlite3.Row."""
+    cols = [col[0] for col in cursor.description]
+    return sqlite3.Row(sqlite3.connect(":memory:", check_same_thread=False).cursor(), tuple(range(len(cols))))
+
+
+class _DictRow:
+    """Lightweight dict-like row for libsql compatibility."""
+    __slots__ = ("_keys", "_values", "_map")
+
+    def __init__(self, keys, values):
+        self._keys = keys
+        self._values = values
+        self._map = dict(zip(keys, values))
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, slice)):
+            return self._values[key]
+        return self._map[key]
+
+    def __iter__(self):
+        return iter(self._map.items())
+
+    def __len__(self):
+        return len(self._keys)
+
+    def keys(self):
+        return self._keys
+
+
+class _LibsqlWrapper:
+    """Wraps a libsql connection to return dict-compatible rows from queries."""
+
+    def __init__(self, raw_conn):
+        self._conn = raw_conn
+
+    def execute(self, sql, params=()):
+        cursor = self._conn.execute(sql, params)
+        return _CursorWrapper(cursor)
+
+    def executescript(self, sql):
+        return self._conn.executescript(sql)
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def sync(self):
+        self._conn.sync()
+
+
+class _CursorWrapper:
+    """Wraps a libsql cursor to return _DictRow objects."""
+
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    @property
+    def description(self):
+        return self._cursor.description
+
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+    def fetchall(self):
+        rows = self._cursor.fetchall()
+        if not rows or not self._cursor.description:
+            return rows
+        keys = [col[0] for col in self._cursor.description]
+        return [_DictRow(keys, r) for r in rows]
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        if row is None or not self._cursor.description:
+            return row
+        keys = [col[0] for col in self._cursor.description]
+        return _DictRow(keys, row)
+
+
 @contextmanager
 def conn():
     if _is_turso():
         import libsql_experimental as libsql
         url = os.environ["TURSO_HUB_URL"]
         token = os.environ["TURSO_HUB_TOKEN"]
-        c = libsql.connect("hub.db", sync_url=url, auth_token=token)
-        c.sync()
+        raw = libsql.connect("hub.db", sync_url=url, auth_token=token)
+        raw.sync()
+        c = _LibsqlWrapper(raw)
         try:
             yield c
             c.commit()
